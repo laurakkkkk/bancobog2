@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco de Bogotá - Solicitud Digital</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Pantalla de carga */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #003d82 0%, #0052a8 50%, #2c4a7c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-logo {
+            width: 200px;
+            height: auto;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 20px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animación de fondo azul con círculos */
+        .animated-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c4a7c 0%, #3d5a8c 50%, #4a6b9d 100%);
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .circle:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            background: #ff4757;
+            top: 20%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .circle:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            background: #5f9bff;
+            top: 50%;
+            left: 70%;
+            animation-delay: 1s;
+        }
+
+        .circle:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            background: #ffd93d;
+            top: 70%;
+            left: 30%;
+            animation-delay: 2s;
+        }
+
+        .circle:nth-child(4) {
+            width: 70px;
+            height: 70px;
+            background: #6bcf7f;
+            top: 40%;
+            left: 50%;
+            animation-delay: 1.5s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-20px) scale(1.1);
+            }
+        }
+
+        /* Header */
+        .header {
+            background-color: #003d82;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            height: 40px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-ingresar {
+            background-color: white;
+            color: #003d82;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .menu-icon {
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* Card amarilla principal */
+        .main-card {
+            background-color: #ffc629;
+            border-radius: 20px;
+            padding: 25px 20px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            position: relative;
+            overflow: visible;
+            min-height: 520px;
+        }
+
+        .main-card h3 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .main-card h1 {
+            font-size: 26px;
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            color: #000;
+            max-width: 280px;
+        }
+
+        .main-card p {
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #000;
+            max-width: 280px;
+        }
+
+        .btn-primary {
+            background-color: #003d82;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 15px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,61,130,0.3);
+        }
+
+        .cards-display {
+            position: relative;
+            height: 230px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            pointer-events: none;
+            padding: 0;
+            overflow: visible;
+        }
+
+        .card-image {
+            width: 90%;
+            max-width: 280px;
+            height: auto;
+            display: block;
+            pointer-events: none;
+            object-fit: contain;
+            margin-left: 0;
+        }
+
+        .help-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: #ffc629;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 2px solid #f5b800;
+            cursor: pointer;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .help-btn:hover {
+            background-color: #f5b800;
+            transform: scale(1.05);
+        }
+
+        .help-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Tabs - Centrados */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 20px;
+            background-color: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background-color: white;
+            color: #003d82;
+        }
+
+        /* Card de Tarjeta */
+        .card-section {
+            display: none;
+        }
+
+        .card-section.active {
+            display: block;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .product-card h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #000;
+        }
+
+        .product-card .description {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        .product-image {
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            border-radius: 10px;
+            margin: 0 auto 25px;
+            display: block;
+        }
+
+        .feature {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            align-items: flex-start;
+        }
+
+        .feature-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+        }
+
+        .feature-text {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: #003d82;
+            padding: 12px;
+            border-radius: 25px;
+            border: 2px solid #003d82;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 15px;
+            width: 100%;
+            transition: all 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #003d82;
+            color: white;
+        }
+
+        /* Simulador de Crédito */
+        .simulator-card {
+            background-color: white;
+            border-radius: 20px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .simulator-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #000;
+        }
+
+        .simulator-card .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .amount-display {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .amount-display .label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .amount-display .amount {
+            font-size: 36px;
+            font-weight: 900;
+            color: #003d82;
+        }
+
+        .slider-container {
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #003d82 0%, #003d82 50%, #e0e0e0 50%, #e0e0e0 100%);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #003d82;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,61,130,0.3);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #003d82;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,61,130,0.3);
+        }
+
+        .installment-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .installment-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .installment-option:hover {
+            border-color: #003d82;
+        }
+
+        .installment-option.selected {
+            border-color: #003d82;
+            background-color: #f0f7ff;
+        }
+
+        .installment-option .months {
+            font-size: 32px;
+            font-weight: 900;
+            color: #003d82;
+            margin-bottom: 5px;
+        }
+
+        .installment-option .monthly-payment {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .installment-option .monthly-amount {
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .btn-simulate {
+            background-color: #003d82;
+            color: white;
+            padding: 15px;
+            border-radius: 25px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-simulate:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,61,130,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de carga -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <img src="bancobog.png" alt="Banco de Bogotá" class="loading-logo">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Fondo animado -->
+    <div class="animated-background">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <img src="image.png" alt="Banco de Bogotá" class="logo">
+        <div class="header-buttons">
+            <div class="menu-icon">
+                <div style="font-size: 20px;">☰</div>
+                <div>Menú</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container principal -->
+    <div class="container">
+        <!-- Tarjeta amarilla principal -->
+        <div class="main-card">
+            <h3>EDICIÓN ESPECIAL MUNDIAL</h3>
+            <h1>¡Celebra la pasión del fútbol con tu tarjeta!</h1>
+            <p>Tarjeta de Crédito edición Copa del Mundo con diseño exclusivo y beneficios únicos.</p>
+            <button class="btn-primary" id="btnLaQuiero">¡La quiero!</button>
+            
+            <div class="cards-display">
+                <img src="tarjetas.png" alt="Tarjeta Banco de Bogotá" class="card-image">
+            </div>
+            
+            <button class="help-btn">
+                <svg class="help-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 11.5C21 16.75 16.75 21 11.5 21C6.25 21 2 16.75 2 11.5C2 6.25 6.25 2 11.5 2C16.75 2 21 6.25 21 11.5Z" stroke="#003d82" stroke-width="2"/>
+                    <path d="M11.5 8V12" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="11.5" cy="15" r="0.5" fill="#003d82" stroke="#003d82"/>
+                </svg>
+                Ayuda
+            </button>
+        </div>
+
+        <!-- Tabs centrados -->
+        <div class="tabs">
+            <button class="tab active" data-tab="preferidas">Preferidas</button>
+            <button class="tab" data-tab="viajes">Viajes</button>
+            <button class="tab" data-tab="propias">Propias</button>
+        </div>
+
+        <!-- Sección Preferidas (Copa) -->
+        <div class="card-section active" id="preferidas">
+            <div class="product-card">
+                <h2>Copa</h2>
+                <p class="description">Disfruta de beneficios exclusivos con tu tarjeta Copa del Banco de Bogotá.</p>
+                
+                <img src="copa.jpg" alt="Tarjeta Copa" class="product-image">
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#003d82" stroke-width="2"/>
+                        <path d="M2 10H22" stroke="#003d82" stroke-width="2"/>
+                        <path d="M6 15H10" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Avances en efectivo:</strong> Accede hasta al 30% de tu cupo disponible.
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="9" stroke="#003d82" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Cuota de manejo:</strong> Gratis por 6 meses. Luego, $33.100
+                    </div>
+                </div>
+                
+                <button class="btn-secondary btn-conoce-mas">Conoce más</button>
+            </div>
+
+            <!-- Simulador Copa -->
+            <div class="simulator-card">
+                <h3>Simulador de Crédito</h3>
+                <p class="subtitle">Calcula tu cuota ideal</p>
+                
+                <div class="amount-display">
+                    <div class="label">Monto a solicitar</div>
+                    <div class="amount" id="loanAmountPreferidas">$5,000,000</div>
+                </div>
+                
+                <div class="slider-container">
+                    <input type="range" min="1000000" max="10000000" value="5000000" step="500000" class="slider" id="amountSliderPreferidas">
+                </div>
+                
+                <div class="installment-options" id="installmentsPreferidas">
+                    <div class="installment-option selected" data-months="12">
+                        <div class="months">12</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$458,333</div>
+                    </div>
+                    <div class="installment-option" data-months="24">
+                        <div class="months">24</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$239,583</div>
+                    </div>
+                    <div class="installment-option" data-months="36">
+                        <div class="months">36</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$166,667</div>
+                    </div>
+                    <div class="installment-option" data-months="48">
+                        <div class="months">48</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$130,208</div>
+                    </div>
+                </div>
+                
+                <button class="btn-simulate">Solicitar ahora</button>
+            </div>
+        </div>
+
+        <!-- Sección Viajes (LATAM Pass) -->
+        <div class="card-section" id="viajes">
+            <div class="product-card">
+                <h2>Clásica LATAM Pass</h2>
+                <p class="description">Acumula hasta 1.5 millas LATAM Pass por cada dólar en compras.</p>
+                
+                <img src="viajes.webp" alt="Tarjeta LATAM Pass" class="product-image">
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#003d82" stroke-width="2"/>
+                        <path d="M2 10H22" stroke="#003d82" stroke-width="2"/>
+                        <path d="M6 15H10" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Avances en efectivo:</strong> Accede hasta al 30% de tu cupo disponible.
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="9" stroke="#003d82" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Cuota de manejo:</strong> Gratis por 3 meses. Luego, $33.100
+                    </div>
+                </div>
+                
+                <button class="btn-secondary btn-conoce-mas">Conoce más</button>
+            </div>
+
+            <!-- Simulador LATAM Pass -->
+            <div class="simulator-card">
+                <h3>Simulador de Crédito</h3>
+                <p class="subtitle">Calcula tu cuota ideal</p>
+                
+                <div class="amount-display">
+                    <div class="label">Monto a solicitar</div>
+                    <div class="amount" id="loanAmountViajes">$5,000,000</div>
+                </div>
+                
+                <div class="slider-container">
+                    <input type="range" min="1000000" max="10000000" value="5000000" step="500000" class="slider" id="amountSliderViajes">
+                </div>
+                
+                <div class="installment-options" id="installmentsViajes">
+                    <div class="installment-option selected" data-months="12">
+                        <div class="months">12</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$458,333</div>
+                    </div>
+                    <div class="installment-option" data-months="24">
+                        <div class="months">24</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$239,583</div>
+                    </div>
+                    <div class="installment-option" data-months="36">
+                        <div class="months">36</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$166,667</div>
+                    </div>
+                    <div class="installment-option" data-months="48">
+                        <div class="months">48</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$130,208</div>
+                    </div>
+                </div>
+                
+                <button class="btn-simulate">Solicitar ahora</button>
+            </div>
+        </div>
+
+        <!-- Sección Propias (Gold) -->
+        <div class="card-section" id="propias">
+            <div class="product-card">
+                <h2>Gold</h2>
+                <p class="description">Acumula 1.5 puntos tuplús por cada $4.000 COP facturado en compras.</p>
+                
+                <img src="economia.webp" alt="Tarjeta Gold" class="product-image">
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#003d82" stroke-width="2"/>
+                        <path d="M2 10H22" stroke="#003d82" stroke-width="2"/>
+                        <path d="M6 15H10" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Avances en efectivo:</strong> accede hasta al 30% de tu cupo disponible.
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <svg class="feature-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="9" stroke="#003d82" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="#003d82" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="feature-text">
+                        <strong>Cuota de manejo:</strong> Gratis por 6 meses. Luego, $38.700
+                    </div>
+                </div>
+                
+                <button class="btn-secondary btn-conoce-mas">Conoce más</button>
+            </div>
+
+            <!-- Simulador Gold -->
+            <div class="simulator-card">
+                <h3>Simulador de Crédito</h3>
+                <p class="subtitle">Calcula tu cuota ideal</p>
+                
+                <div class="amount-display">
+                    <div class="label">Monto a solicitar</div>
+                    <div class="amount" id="loanAmountPropias">$5,000,000</div>
+                </div>
+                
+                <div class="slider-container">
+                    <input type="range" min="1000000" max="10000000" value="5000000" step="500000" class="slider" id="amountSliderPropias">
+                </div>
+                
+                <div class="installment-options" id="installmentsPropias">
+                    <div class="installment-option selected" data-months="12">
+                        <div class="months">12</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$458,333</div>
+                    </div>
+                    <div class="installment-option" data-months="24">
+                        <div class="months">24</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$239,583</div>
+                    </div>
+                    <div class="installment-option" data-months="36">
+                        <div class="months">36</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$166,667</div>
+                    </div>
+                    <div class="installment-option" data-months="48">
+                        <div class="months">48</div>
+                        <div class="monthly-payment">cuotas de</div>
+                        <div class="monthly-amount">$130,208</div>
+                    </div>
+                </div>
+                
+                <button class="btn-simulate">Solicitar ahora</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para mostrar pantalla de carga y redirigir
+        function showLoadingAndRedirect(url) {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.display = 'flex';
+            loadingScreen.classList.remove('hidden');
+            
+            setTimeout(function() {
+                window.location.href = url;
+            }, 1500);
+        }
+
+        // Ocultar pantalla de carga al inicio
+        window.addEventListener('load', function() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.display = 'none';
+        });
+
+        // Animación adicional de los círculos
+        const circles = document.querySelectorAll('.circle');
+        
+        circles.forEach((circle, index) => {
+            setInterval(() => {
+                const colors = ['#ff4757', '#5f9bff', '#ffd93d', '#6bcf7f', '#ff6348', '#a29bfe'];
+                circle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            }, 3000 + (index * 500));
+        });
+
+        // Botón "¡La quiero!" - mostrar loading y redirigir a datos.html
+        document.getElementById('btnLaQuiero').addEventListener('click', function(e) {
+            e.preventDefault();
+            showLoadingAndRedirect('datos.html');
+        });
+
+        // Botón "Ayuda" - mostrar loading y redirigir a datos.html
+        document.querySelector('.help-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            showLoadingAndRedirect('datos.html');
+        });
+
+        // Botones "Conoce más" - mostrar loading y redirigir a datos.html
+        document.querySelectorAll('.btn-conoce-mas').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                showLoadingAndRedirect('datos.html');
+            });
+        });
+
+        // Tabs functionality
+        const tabs = document.querySelectorAll('.tab');
+        const cardSections = document.querySelectorAll('.card-section');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                
+                // Hide all card sections
+                cardSections.forEach(section => section.classList.remove('active'));
+                
+                // Show the corresponding section
+                const tabName = tab.getAttribute('data-tab');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Simulador de crédito function
+        function setupSimulator(sliderId, displayId, installmentsId) {
+            const slider = document.getElementById(sliderId);
+            const loanAmountDisplay = document.getElementById(displayId);
+            const installmentsContainer = document.getElementById(installmentsId);
+            
+            function formatCurrency(amount) {
+                return '$' + amount.toLocaleString('es-CO');
+            }
+            
+            function updateInstallments(amount) {
+                const options = installmentsContainer.querySelectorAll('.installment-option');
+                options[0].querySelector('.monthly-amount').textContent = formatCurrency(Math.round(amount * 1.1 / 12));
+                options[1].querySelector('.monthly-amount').textContent = formatCurrency(Math.round(amount * 1.15 / 24));
+                options[2].querySelector('.monthly-amount').textContent = formatCurrency(Math.round(amount * 1.2 / 36));
+                options[3].querySelector('.monthly-amount').textContent = formatCurrency(Math.round(amount * 1.25 / 48));
+            }
+            
+            slider.addEventListener('input', function() {
+                const value = parseInt(this.value);
+                loanAmountDisplay.textContent = formatCurrency(value);
+                
+                const percent = ((value - this.min) / (this.max - this.min)) * 100;
+                this.style.background = `linear-gradient(to right, #003d82 0%, #003d82 ${percent}%, #e0e0e0 ${percent}%, #e0e0e0 100%)`;
+                
+                updateInstallments(value);
+            });
+            
+            // Installment options
+            const installmentOptions = installmentsContainer.querySelectorAll('.installment-option');
+            installmentOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    installmentOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                });
+            });
+        }
+
+        // Setup all simulators
+        setupSimulator('amountSliderPreferidas', 'loanAmountPreferidas', 'installmentsPreferidas');
+        setupSimulator('amountSliderViajes', 'loanAmountViajes', 'installmentsViajes');
+        setupSimulator('amountSliderPropias', 'loanAmountPropias', 'installmentsPropias');
+
+        // Redirección a datos.html en botones "Solicitar ahora"
+        document.querySelectorAll('.btn-simulate').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                showLoadingAndRedirect('datos.html');
+            });
+        });
+
+        // Button interactions
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
